@@ -82,7 +82,17 @@ routes.home = async (app) => {
   }
 };
 
-const catIcons = { electronics: '📱', clothing: '👕', 'home-garden': '🏡', sports: '⚽', books: '📚' };
+const catIcons = {
+  electronics: '📱',
+  clothing: '👕',
+  'home-garden': '🏡',
+  sports: '⚽',
+  books: '📚',
+  beauty: '💄',
+  'toys-games': '🧸',
+  health: '💊',
+  automotive: '🚗'
+};
 
 // ===== PRODUCT CARD =====
 function renderProductCard(p) {
@@ -90,7 +100,7 @@ function renderProductCard(p) {
   return `
   <div class="product-card" onclick="navigate('product', {id:${p.id}})">
     <div class="product-img-wrap">
-      <img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" loading="lazy" onerror="this.src='https://via.placeholder.com/400x400?text=Product'">
+      <img src="${p.image}" alt="${escapeHtml(p.name)}" loading="lazy" onerror="this.src='https://via.placeholder.com/400x400?text=Product'">
       ${disc > 0 ? `<span class="product-badge badge-sale">-${disc}%</span>` : p.featured ? `<span class="product-badge badge-featured">Featured</span>` : ''}
     </div>
     <div class="product-info">
@@ -125,7 +135,7 @@ routes.products = async (app, params = {}) => {
     let qp = new URLSearchParams();
     if (params.category) qp.set('category', params.category);
     if (params.search) qp.set('search', params.search);
-    qp.set('limit', '20');
+    qp.set('limit', '200');
 
     const data = await api('GET', `/products?${qp}`);
 
@@ -146,16 +156,16 @@ routes.products = async (app, params = {}) => {
         ${params.search ? `<div style="background:var(--primary-light);color:var(--primary);padding:6px 14px;border-radius:99px;font-size:.85rem;font-weight:600;">Search: "${escapeHtml(params.search)}" <button onclick="navigate('products')" style="margin-left:6px;color:var(--primary);font-weight:700">×</button></div>` : ''}
         <select onchange="navigate('products', {...currentParams, sort: this.value})">
           <option value="">Sort: Default</option>
-          <option value="price-asc" ${params.sort==='price-asc'?'selected':''}>Price: Low to High</option>
-          <option value="price-desc" ${params.sort==='price-desc'?'selected':''}>Price: High to Low</option>
-          <option value="rating" ${params.sort==='rating'?'selected':''}>Top Rated</option>
-          <option value="popular" ${params.sort==='popular'?'selected':''}>Most Popular</option>
+          <option value="price-asc" ${params.sort === 'price-asc' ? 'selected' : ''}>Price: Low to High</option>
+          <option value="price-desc" ${params.sort === 'price-desc' ? 'selected' : ''}>Price: High to Low</option>
+          <option value="rating" ${params.sort === 'rating' ? 'selected' : ''}>Top Rated</option>
+          <option value="popular" ${params.sort === 'popular' ? 'selected' : ''}>Most Popular</option>
         </select>
         <span class="results-count">${data.total} products found</span>
       </div>
 
       <!-- Grid -->
-      ${data.products.length ? `<div class="product-grid" style="padding-bottom:48px;">${data.products.map(renderProductCard).join('')}</div>` 
+      ${data.products.length ? `<div class="product-grid" style="padding-bottom:48px;">${data.products.map(renderProductCard).join('')}</div>`
         : `<div class="empty-state"><div class="empty-icon">🔍</div><h3>No products found</h3><p>Try a different search or category.</p><button class="btn btn-primary" onclick="navigate('products')">Browse All</button></div>`}
     </div>`;
   } catch (e) {
@@ -177,10 +187,10 @@ routes.product = async (app, { id }) => {
 
     app.innerHTML = `
     <div class="product-detail">
-      <button class="back-btn" onclick="history.back()">← Back</button>
+      <button class="back-btn" onclick="navigate('products')">← Back</button>
       <div class="product-detail-grid">
         <div class="product-detail-img">
-          <img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" onerror="this.src='https://via.placeholder.com/600x600?text=Product'">
+          <img src="${p.image}" alt="${escapeHtml(p.name)}" onerror="this.src='https://via.placeholder.com/600x600?text=Product'">
         </div>
         <div class="product-detail-info">
           <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--primary);margin-bottom:8px;">${escapeHtml(p.category_name || '')}</div>
@@ -217,13 +227,13 @@ routes.product = async (app, { id }) => {
   }
 };
 
-window.changeQty = function(delta) {
+window.changeQty = function (delta) {
   const input = document.getElementById('qtyInput');
   if (!input) return;
   const max = parseInt(input.max);
   input.value = Math.max(1, Math.min(max, parseInt(input.value || 1) + delta));
 };
-window.addDetailToCart = function(id) {
+window.addDetailToCart = function (id) {
   const qty = parseInt(document.getElementById('qtyInput')?.value || 1);
   addToCart(id, qty);
 };
@@ -320,9 +330,9 @@ routes.checkout = async (app) => {
         <div class="form-card">
           <h3 style="margin-bottom:20px;font-weight:700;">Payment Method</h3>
           <div style="display:flex;flex-direction:column;gap:10px;">
-            ${[['card','💳 Credit / Debit Card'],['paypal','🅿️ PayPal'],['cod','💵 Cash on Delivery']].map(([val,label]) => `
+            ${[['card', '💳 Credit / Debit Card'], ['paypal', '🅿️ PayPal'], ['cod', '💵 Cash on Delivery']].map(([val, label]) => `
             <label style="display:flex;align-items:center;gap:12px;padding:14px;border:1.5px solid var(--gray-4);border-radius:10px;cursor:pointer;transition:border-color .2s;" onclick="this.parentElement.querySelectorAll('label').forEach(l=>l.style.borderColor='var(--gray-4)');this.style.borderColor='var(--primary)'">
-              <input type="radio" name="payment" value="${val}" ${val==='card'?'checked':''} style="accent-color:var(--primary)">
+              <input type="radio" name="payment" value="${val}" ${val === 'card' ? 'checked' : ''} style="accent-color:var(--primary)">
               <span style="font-weight:500">${label}</span>
             </label>`).join('')}
           </div>
@@ -345,7 +355,7 @@ routes.checkout = async (app) => {
   </div>`;
 };
 
-window.placeOrder = async function() {
+window.placeOrder = async function () {
   const name = document.getElementById('shipName')?.value.trim();
   const address = document.getElementById('shipAddress')?.value.trim();
   const city = document.getElementById('shipCity')?.value.trim();
@@ -483,7 +493,7 @@ routes.login = (app) => {
       <div class="form-footer" style="margin-top:16px;">Don't have an account? <a href="#" onclick="navigate('register')">Create one</a></div>
       <div class="form-divider">Demo credentials</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        <button class="btn btn-ghost btn-sm" onclick="fillLogin('jane@example.com','user123')">👤 User Demo</button>
+        <button class="btn btn-ghost btn-sm" onclick="fillLogin('naimul@gmail.com','Naimul0123#')">👤 Naimul Demo</button>
         <button class="btn btn-ghost btn-sm" onclick="fillLogin('admin@store.com','admin123')">🔧 Admin Demo</button>
       </div>
     </div>
@@ -494,7 +504,7 @@ window.fillLogin = (e, p) => {
   document.getElementById('loginEmail').value = e;
   document.getElementById('loginPassword').value = p;
 };
-window.doLogin = async function() {
+window.doLogin = async function () {
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
   const errEl = document.getElementById('loginError');
@@ -507,7 +517,7 @@ window.doLogin = async function() {
     updateHeaderAuth();
     await loadCart();
     toast(`Welcome back, ${user.name}!`, 'success');
-    navigate(user.role === 'admin' ? 'admin' : 'admin-panel');
+    navigate('home');
   } catch (e) {
     errEl.textContent = e.message;
     errEl.style.display = 'block';
@@ -533,7 +543,7 @@ routes.register = (app) => {
   </div>`;
 };
 
-window.doRegister = async function() {
+window.doRegister = async function () {
   const name = document.getElementById('regName').value.trim();
   const email = document.getElementById('regEmail').value.trim();
   const password = document.getElementById('regPassword').value;
@@ -579,7 +589,7 @@ routes.profile = async (app) => {
   </div>`;
 };
 
-window.saveProfile = async function() {
+window.saveProfile = async function () {
   const msgEl = document.getElementById('profMsg');
   try {
     await api('PUT', '/auth/profile', {
@@ -605,7 +615,7 @@ routes.about = (app) => {
       <p style="font-size:1.1rem;color:var(--gray-2);line-height:1.8;">ShopNest is a modern e-commerce platform built to deliver the best online shopping experience. We offer a curated selection of quality products across electronics, fashion, home goods, sports, and more.</p>
     </div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;text-align:center;">
-      ${[['10K+','Happy Customers'],['5K+','Products'],['99%','Satisfaction Rate']].map(([n,l])=>`
+      ${[['10K+', 'Happy Customers'], ['150+', 'Products'], ['99%', 'Satisfaction Rate']].map(([n, l]) => `
       <div style="background:white;border:1px solid var(--gray-5);border-radius:16px;padding:28px;">
         <div style="font-size:2rem;font-weight:800;color:var(--primary);margin-bottom:6px;">${n}</div>
         <div style="color:var(--gray-2);font-size:.9rem;">${l}</div>

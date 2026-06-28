@@ -24,6 +24,7 @@ function toast(message, type = 'info') {
   const icons = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
   const el = document.createElement('div');
   el.className = `toast toast-${type}`;
+  document.getElementById('searchInput').value = '';
   el.innerHTML = `<span>${icons[type]}</span><span>${message}</span>`;
   document.getElementById('toastContainer').appendChild(el);
   setTimeout(() => el.remove(), 3500);
@@ -34,6 +35,10 @@ const routes = {};
 let currentParams = {};
 
 function navigate(page, params = {}) {
+  // Save current params before changing page for back navigation
+  const prev = { page: state.currentPage, params: currentParams };
+  // Push navigation state to browser history
+  window.history.pushState(prev, '', '');
   currentParams = params;
   const app = document.getElementById('app');
 

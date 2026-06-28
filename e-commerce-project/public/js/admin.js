@@ -298,11 +298,24 @@ async function renderAdminUsers() {
   c.innerHTML = `<div class="loading-spinner"><div class="spinner"></div></div>`;
   try {
     const { users } = await api('GET', '/admin/users');
+    // Store for later editing
+    window._adminUsers = users;
     c.innerHTML = `
-    <div class="admin-header"><h2>Customers</h2><p style="color:var(--gray-2);font-size:.875rem;">${users.filter(u=>u.role==='user').length} customers</p></div>
+    <div class="admin-header">
+      <h2>Customers</h2>
+      <p style="color:var(--gray-2);font-size:.875rem;">${users.filter(u=>u.role==='user').length} customers</p>
+    </div>
     <div class="admin-table-wrap">
       <table class="admin-table">
-        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th></tr></thead>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Joined</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
         <tbody>
           ${users.map(u => `
           <tr>
@@ -310,6 +323,12 @@ async function renderAdminUsers() {
             <td style="color:var(--gray-2)">${escapeHtml(u.email)}</td>
             <td><span style="font-size:.75rem;padding:3px 10px;border-radius:99px;font-weight:700;background:${u.role==='admin'?'var(--primary-light)':'var(--gray-6)'};color:${u.role==='admin'?'var(--primary)':'var(--gray-2)'};">${u.role}</span></td>
             <td style="color:var(--gray-2);font-size:.85rem;">${formatDate(u.created_at)}</td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                <button class="btn btn-ghost btn-sm" onclick="openUserModal(${u.id})">Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id})">Delete</button>
+              </div>
+            </td>
           </tr>`).join('')}
         </tbody>
       </table>
@@ -379,4 +398,66 @@ window.saveAdminProfile = async function(event) {
     toast(e.message, 'error');
   }
   return false;
+}
+
+// User management functions
+window.openUserModal = async function(id) {
+  const users = window._adminUsers || [];
+  const user = users.find(u => u.id === id);
+  if (!user) { toast('User not found', 'error'); return; }
+  const content = document.getElementById('adminContent');
+  content.innerHTML = `
+    <div class="admin-header"><h2>Edit User</h2></div>
+    <div class="modal-overlay" style="display:flex;" id="userModal">
+      <div class="modal">
+        <div class="modal-header"><h3>Edit User</h3><button class="modal-close" onclick="closeUserModal()">✕</button></div>
+        <div class="modal-body">
+          <input type="hidden" id="editUserId" value="${user.id}">
+          <div class="form-group"><label>Name</label><input type="text" id="uName" value="${escapeHtml(user.name)}"></div>
+          <div class="form-group"><label>Email</label><input type="email" id="uEmail" value="${escapeHtml(user.email)}"></div>
+          <div class="form-group"><label>Phone</label><input type="tel" id="uPhone" value="${escapeHtml(user.phone||'')}" ></div>
+          <div class="form-group"><label>Address</label><textarea id="uAddress">${escapeHtml(user.address||'')}</textarea></div>
+          <div class="form-group"><label>Role</label><select id="uRole">
+            <option value="user" ${user.role==='user'?'selected':''}>User</option>
+            <option value="admin" ${user.role==='admin'?'selected':''}>Admin</option>
+          </select></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" onclick="closeUserModal()">Cancel</button>
+          <button class="btn btn-primary" onclick="saveUser()">Save</button>
+        </div>
+      </div>
+    </div>`;
 };
+
+window.closeUserModal = function() {
+  const modal = document.getElementById('userModal');
+  if (modal) modal.style.display = 'none';
+};
+
+window.saveUser = async function() {
+  const id = document.getElementById('editUserId').value;
+  const data = {
+    name: document.getElementById('uName').value.trim(),
+    email: document.getElementById('uEmail').value.trim(),
+    phone: document.getElementById('uPhone').value.trim() || null,
+    address: document.getElementById('uAddress').value.trim() || null,
+    role: document.getElementById('uRole').value
+  };
+  if (!data.name || !data.email) { toast('Name and email required', 'error'); return; }
+  try {
+    await api('PUT', `/admin/users/${id}`, data);
+    toast('User updated', 'success');
+    renderAdminUsers();
+    closeUserModal();
+  } catch (e) { toast(e.message, 'error'); }
+};
+
+window.deleteUser = async function(id) {
+  if (!confirm('Delete this user?')) return;
+  try {
+    await api('DELETE', `/admin/users/${id}`);
+    toast('User deleted', 'success');
+    renderAdminUsers();
+  } catch (e) { toast(e.message, 'error'); }
+};;
