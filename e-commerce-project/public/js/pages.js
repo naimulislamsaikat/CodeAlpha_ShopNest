@@ -22,7 +22,8 @@ routes.home = async (app) => {
         <p>Discover thousands of quality products at unbeatable prices, delivered to your door.</p>
         <div class="hero-actions">
           <button class="btn btn-primary btn-lg" onclick="navigate('products')">Shop Now →</button>
-          <button class="btn btn-secondary btn-lg" onclick="navigate('products', {category:'electronics'})">Electronics</button>
+          <!-- <button class="btn btn-secondary btn-lg" onclick="navigate('products', {category:'electronics'})">Electronics</button> -->
+          <Button class="btn btn-secondary btn-lg" onclick="navigate('login')">Log In</button>
         </div>
       </div>
     </section>
@@ -493,8 +494,8 @@ routes.login = (app) => {
       <div class="form-footer" style="margin-top:16px;">Don't have an account? <a href="#" onclick="navigate('register')">Create one</a></div>
       <div class="form-divider">Demo credentials</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        <button class="btn btn-ghost btn-sm" onclick="fillLogin('naimul@gmail.com','Naimul0123#')">👤 Naimul Demo</button>
-        <button class="btn btn-ghost btn-sm" onclick="fillLogin('admin@store.com','admin123')">🔧 Admin Demo</button>
+        <button class="btn btn-ghost btn-sm" onclick="fillLogin('naimul@gmail.com','Naimul0123#')">👤 User Demo</button>
+        <button class="btn btn-ghost btn-sm" onclick="fillLogin('admin@store.com','admin123')">☠️ Admin Demo</button>
       </div>
     </div>
   </div>`;
